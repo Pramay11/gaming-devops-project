@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  user-service:
+    build: ./user-service
+    ports:
+      - "3000:3000"
+
+  game-service:
+    build: ./game-service
+    ports:
+      - "3001:3001"
+
+  matchmaking-service:
+    build: ./matchmaking-service
+    ports:
+      - "3002:3002"
+
+  chat-service:
+    build: ./chat-service
+    ports:
+      - "4000:4000"
+
+  redis:
+    image: redis
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
