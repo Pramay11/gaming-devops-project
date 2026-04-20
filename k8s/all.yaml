@@ -1,4 +1,11 @@
-apiVersion: v1
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
       app: user
   template:
     metadata:
@@ -6,11 +13,11 @@ apiVersion: v1
         app: user
     spec:
       containers:
-      - name: user
-        image: user-service
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 3000
+        - name: user
+          image: user-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
 
 ---
 apiVersion: v1
@@ -41,11 +48,11 @@ spec:
         app: game
     spec:
       containers:
-      - name: game
-        image: game-service
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 4000
+        - name: game
+          image: game-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
 
 ---
 apiVersion: v1
