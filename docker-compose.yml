@@ -4,7 +4,7 @@ services:
   user-service:
     build: ./user-service
     ports:
-      - "3000:3000"
+      - "3010:3010"
 
   game-service:
     build: ./game-service

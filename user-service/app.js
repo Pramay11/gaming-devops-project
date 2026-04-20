@@ -12,4 +12,4 @@ app.post('/login', (req, res) => {
   res.json({ message: `Welcome ${username}` });
 });
 
-app.listen(3000, () => console.log("User Service on 3000"));
+app.listen(3010, () => console.log("User Service on 3010"));
