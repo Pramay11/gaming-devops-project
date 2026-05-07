@@ -1,104 +1,130 @@
-pipeline {
-    agent any
+    pipeline {
+        agent any
 
-    environment {
-        DOCKER_HUB = "your-dockerhub"
-        IMAGE_NAME = "gaming-devops"
-        NEXUS_URL = "http://<nexus-ip>:8081"
-        SONARQUBE = "SonarQube-Server"
-    }
-
-    tools {
-        jdk 'jdk17'
-        nodejs 'node18'
-    }
-
-    stages {
-
-        stage('Checkout Code') {
-            steps {
-                git 'https://github.com/Pramay11/gaming-devops-project.git'
-            }
+        environment {
+            DOCKER_HUB = "your-dockerhub"
+            NEXUS_URL = "http://<nexus-ip>:8081"
+            SONARQUBE = "SonarQube-Server"
         }
 
-        // ---------------- SONARQUBE ----------------
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    sh """
-                    sonar-scanner \
-                    -Dsonar.projectKey=gaming-devops \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=http://<sonarqube-ip>:9000 \
-                    -Dsonar.login=$SONAR_AUTH_TOKEN
-                    """
+        tools {
+            jdk 'jdk17'
+            nodejs 'node18'
+        }
+
+        stages {
+
+            stage('Checkout Code') {
+                steps {
+                    checkout scm
+                }
+            }
+
+            // ---------------- SONARQUBE ----------------
+            stage('SonarQube Analysis') {
+                steps {
+                    withCredentials([string(credentialsId: 'sonar-auth-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                        withSonarQubeEnv("${SONARQUBE}") {
+                            sh '''
+                            sonar-scanner \
+                              -Dsonar.projectKey=gaming-devops \
+                              -Dsonar.sources=. \
+                              -Dsonar.login=${SONAR_AUTH_TOKEN}
+                            '''
+                        }
+                    }
+                }
+            }
+
+            // ---------------- OWASP ----------------
+            stage('OWASP Dependency Check') {
+                steps {
+                    dependencyCheck additionalArguments: '--scan .', odcInstallation: 'OWASP-DC'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                }
+            }
+
+            // ---------------- BUILD DOCKER ----------------
+            stage('Build Docker Images') {
+                steps {
+                    sh '''
+                    TAG=${BUILD_NUMBER:-latest}
+
+                    docker build -t ${DOCKER_HUB}/user-service:${TAG} ./user-service
+                    docker build -t ${DOCKER_HUB}/game-service:${TAG} ./game-service
+                    docker build -t ${DOCKER_HUB}/matchmaking-service:${TAG} ./matchmaking-service
+                    docker build -t ${DOCKER_HUB}/chat-service:${TAG} ./chat-service
+                    '''
+                }
+            }
+
+            // ---------------- TRIVY IMAGE SCAN ----------------
+            stage('Trivy Image Scan') {
+                steps {
+                    sh '''
+                    TAG=${BUILD_NUMBER:-latest}
+
+                    trivy image --format table ${DOCKER_HUB}/user-service:${TAG}
+                    trivy image --format table ${DOCKER_HUB}/game-service:${TAG}
+                    trivy image --format table ${DOCKER_HUB}/matchmaking-service:${TAG}
+                    trivy image --format table ${DOCKER_HUB}/chat-service:${TAG}
+                    '''
+                }
+            }
+
+            // ---------------- SONAR QUALITY GATE ----------------
+            stage('SonarQube Quality Gate') {
+                steps {
+                    timeout(time: 5, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
+                }
+            }
+
+            // ---------------- PUSH TO DOCKER HUB ----------------
+            stage('Push to DockerHub') {
+                steps {
+                    withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh '''
+                        TAG=${BUILD_NUMBER:-latest}
+
+                        echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin
+                        docker push ${DOCKER_HUB}/user-service:${TAG}
+                        docker push ${DOCKER_HUB}/game-service:${TAG}
+                        docker push ${DOCKER_HUB}/matchmaking-service:${TAG}
+                        docker push ${DOCKER_HUB}/chat-service:${TAG}
+                        docker logout
+                        '''
+                    }
+                }
+            }
+
+            // ---------------- NEXUS UPLOAD ----------------
+            stage('Upload to Nexus') {
+                steps {
+                    withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                        sh '''
+                        curl -v -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file docker-compose.yml \
+                          ${NEXUS_URL}/repository/devops-artifacts/docker-compose.yml
+                        '''
+                    }
+                }
+            }
+
+            // ---------------- K8S DEPLOY ----------------
+            stage('Deploy to Kubernetes') {
+                steps {
+                    sh 'kubectl apply -f k8s/'
                 }
             }
         }
 
-        // ---------------- OWASP ----------------
-        stage('OWASP Dependency Check') {
-            steps {
-                dependencyCheck additionalArguments: '--scan .', odcInstallation: 'OWASP-DC'
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        post {
+            success {
+                echo "Pipeline executed successfully 🚀"
             }
-        }
-
-        // ---------------- BUILD DOCKER ----------------
-        stage('Build Docker Images') {
-            steps {
-                sh """
-                docker build -t $DOCKER_HUB/user-service ./user-service
-                docker build -t $DOCKER_HUB/game-service ./game-service
-                docker build -t $DOCKER_HUB/matchmaking-service ./matchmaking-service
-                docker build -t $DOCKER_HUB/chat-service ./chat-service
-                """
-            }
-        }
-
-        // ---------------- PUSH TO DOCKER HUB ----------------
-        stage('Push to DockerHub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-creds',
-                usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh """
-                    echo $PASS | docker login -u $USER --password-stdin
-
-                    docker push $DOCKER_HUB/user-service
-                    docker push $DOCKER_HUB/game-service
-                    docker push $DOCKER_HUB/matchmaking-service
-                    docker push $DOCKER_HUB/chat-service
-                    """
-                }
-            }
-        }
-
-        // ---------------- NEXUS UPLOAD ----------------
-        stage('Upload to Nexus') {
-            steps {
-                sh """
-                curl -v -u admin:admin123 --upload-file docker-compose.yml \
-                $NEXUS_URL/repository/devops-artifacts/docker-compose.yml
-                """
-            }
-        }
-
-        // ---------------- K8S DEPLOY ----------------
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh """
-                kubectl apply -f k8s/
-                """
+            failure {
+                echo "Pipeline failed ❌"
             }
         }
     }
-
-    post {
-        success {
-            echo "Pipeline executed successfully 🚀"
-        }
-        failure {
-            echo "Pipeline failed ❌"
-        }
-    }
-}
