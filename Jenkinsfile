@@ -22,19 +22,25 @@
 
             // ---------------- SONARQUBE ----------------
             stage('SonarQube Analysis') {
-                steps {
-                    withCredentials([string(credentialsId: 'sonar-auth-token', variable: 'SONAR_AUTH_TOKEN')]) {
-                        withSonarQubeEnv("${SONARQUBE}") {
-                            sh '''
-                            sonar-scanner \
-                              -Dsonar.projectKey=gaming-devops \
-                              -Dsonar.sources=. \
-                              -Dsonar.login=${SONAR_AUTH_TOKEN}
-                            '''
-                        }
-                    }
+    steps {
+        script {
+            def scannerHome = tool 'sonar-scanner'
+
+            withCredentials([string(credentialsId: 'sonar-auth-token', variable: 'SONAR_AUTH_TOKEN')]) {
+
+                withSonarQubeEnv("${SONARQUBE}") {
+
+                    sh """
+                    ${scannerHome}/bin/sonar-scanner \
+                      -Dsonar.projectKey=gaming-devops \
+                      -Dsonar.sources=. \
+                      -Dsonar.login=${SONAR_AUTH_TOKEN}
+                    """
                 }
             }
+        }
+    }
+}
 
             // ---------------- OWASP ----------------
             stage('OWASP Dependency Check') {
