@@ -5,6 +5,7 @@
             DOCKER_HUB = "your-dockerhub"
             NEXUS_URL = "http://<nexus-ip>:8081"
             SONARQUBE = "SonarQube-Server"
+            NVD_API_KEY = credentials('nvd-api-key')
         }
 
         tools {
@@ -44,11 +45,14 @@
 
             // ---------------- OWASP ----------------
             stage('OWASP Dependency Check') {
-                steps {
-                    dependencyCheck additionalArguments: '--scan .', odcInstallation: 'OWASP-DC'
-                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-                }
-            }
+            steps {
+                  withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                    dependencyCheck additionalArguments: "--nvdApiKey=$NVD_API_KEY",
+                                    odcInstallation: 'OWASP-DC'
+             }
+        }
+        }
+
 
             // ---------------- BUILD DOCKER ----------------
             stage('Build Docker Images') {
