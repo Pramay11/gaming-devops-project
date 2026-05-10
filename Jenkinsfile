@@ -59,10 +59,10 @@
                 steps {
                     sh '''
                     
-                    docker build -t ${DOCKER_HUB}/user-service:${TAG} ./user-service
-                    docker build -t ${DOCKER_HUB}/game-service:${TAG} ./game-service
-                    docker build -t ${DOCKER_HUB}/matchmaking-service:${TAG} ./matchmaking-service
-                    docker build -t ${DOCKER_HUB}/chat-service:${TAG} ./chat-service
+                    docker build -t ${DOCKER_HUB}/user-service:latest ./user-service
+                    docker build -t ${DOCKER_HUB}/game-service:latest ./game-service
+                    docker build -t ${DOCKER_HUB}/matchmaking-service:latest ./matchmaking-service
+                    docker build -t ${DOCKER_HUB}/chat-service:latest ./chat-service
                     '''
                 }
             }
