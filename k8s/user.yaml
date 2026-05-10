@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: user-service
-        image: pramay11/user-service:${TAG}
+        image: pramay11/user-service:latest
         ports:
         - containerPort: 3000
 ---
