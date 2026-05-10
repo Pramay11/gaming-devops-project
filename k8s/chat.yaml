@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: chat-service
-        image: your-dockerhub/chat-service:latest
+        image: pramay11/chat-service:latest
         ports:
         - containerPort: 4000
 ---
