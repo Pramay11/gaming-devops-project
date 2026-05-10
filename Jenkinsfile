@@ -112,15 +112,24 @@
 
             // ---------------- NEXUS UPLOAD ----------------
             stage('Upload to Nexus') {
-                steps {
-                    withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                        sh '''
-                        curl -v -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file docker-compose.yml \
-                          ${NEXUS_URL}/repository/devops-artifacts/docker-compose.yml
-                        '''
-                    }
-                }
-            }
+    steps {
+
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'nexus-creds',
+                usernameVariable: 'NEXUS_USER',
+                passwordVariable: 'NEXUS_PASS'
+            )
+        ]) {
+
+            sh '''
+            curl -v -u ${NEXUS_USER}:${NEXUS_PASS} \
+            --upload-file docker-compose.yml \
+            ${NEXUS_URL}/repository/devops-artifacts/docker-compose.yml
+            '''
+        }
+    }
+}
 
             // ---------------- K8S DEPLOY ----------------
             stage('Deploy to Kubernetes') {
