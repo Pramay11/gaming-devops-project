@@ -94,11 +94,11 @@
             // ---------------- PUSH TO DOCKER HUB ----------------
             stage('Push to DockerHub') {
                 steps {
-                    withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    withCredentials([usernamePassword(credentialsId: 'docker-creds')]) {
                         sh '''
                         TAG=${BUILD_NUMBER:-latest}
 
-                        echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin
+                        echo ${docker-creds} | docker login -u ${DOCKER_HUB} --password-stdin
                         docker push ${DOCKER_HUB}/user-service:${TAG}
                         docker push ${DOCKER_HUB}/game-service:${TAG}
                         docker push ${DOCKER_HUB}/matchmaking-service:${TAG}
