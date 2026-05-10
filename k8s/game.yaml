@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: game-service
-        image: your-dockerhub/game-service:latest
+        image: pramay11/game-service:latest
         ports:
         - containerPort: 3001
 ---
