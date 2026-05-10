@@ -58,8 +58,7 @@
             stage('Build Docker Images') {
                 steps {
                     sh '''
-                    TAG=${BUILD_NUMBER:-latest}
-
+                    
                     docker build -t ${DOCKER_HUB}/user-service:${TAG} ./user-service
                     docker build -t ${DOCKER_HUB}/game-service:${TAG} ./game-service
                     docker build -t ${DOCKER_HUB}/matchmaking-service:${TAG} ./matchmaking-service
@@ -72,12 +71,11 @@
             stage('Trivy Image Scan') {
                 steps {
                     sh '''
-                    TAG=${BUILD_NUMBER:-latest}
-
-                    trivy image --format table ${DOCKER_HUB}/user-service:${TAG}
-                    trivy image --format table ${DOCKER_HUB}/game-service:${TAG}
-                    trivy image --format table ${DOCKER_HUB}/matchmaking-service:${TAG}
-                    trivy image --format table ${DOCKER_HUB}/chat-service:${TAG}
+                    
+                    trivy image --format table ${DOCKER_HUB}/user-service:latest
+                    trivy image --format table ${DOCKER_HUB}/game-service:latest
+                    trivy image --format table ${DOCKER_HUB}/matchmaking-service:latest
+                    trivy image --format table ${DOCKER_HUB}/chat-service:latest
                     '''
                 }
             }
@@ -96,13 +94,13 @@
                 steps {
                     withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh '''
-                        TAG=${BUILD_NUMBER:-latest}
+                       
 
                         echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin
-                        docker push ${DOCKER_HUB}/user-service:${TAG}
-                        docker push ${DOCKER_HUB}/game-service:${TAG}
-                        docker push ${DOCKER_HUB}/matchmaking-service:${TAG}
-                        docker push ${DOCKER_HUB}/chat-service:${TAG}
+                        docker push ${DOCKER_HUB}/user-service:latest
+                        docker push ${DOCKER_HUB}/game-service:latest
+                        docker push ${DOCKER_HUB}/matchmaking-service:latest
+                        docker push ${DOCKER_HUB}/chat-service:latest
                         docker logout
                         '''
                     }
