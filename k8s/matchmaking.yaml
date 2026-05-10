@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: matchmaking-service
-        image: pramay11/matchmaking-service:latest
+        image: pramay11/matchmaking-service:${TAG}
         ports:
         - containerPort: 3002
 ---
