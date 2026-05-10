@@ -3,7 +3,7 @@
 
         environment {
             DOCKER_HUB = "pramay11"
-            NEXUS_URL = "http://localhost:8081/"
+            NEXUS_URL = "http://localhost:8081"
             SONARQUBE = "SonarQube-Server"
             NVD_API_KEY = credentials('nvd-api-key')
         }
