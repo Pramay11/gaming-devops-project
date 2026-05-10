@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: chat-service
-        image: pramay11/chat-service:latest
+        image: pramay11/chat-service:${TAG}
         ports:
         - containerPort: 4000
 ---
