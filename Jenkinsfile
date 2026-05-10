@@ -92,13 +92,13 @@
             }
 
             // ---------------- PUSH TO DOCKER HUB ----------------
-            stage('Push to DockerHub') {
+           stage('Push to DockerHub') {
                 steps {
-                    withCredentials([usernamePassword(credentialsId: 'docker-creds')]) {
+                    withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh '''
                         TAG=${BUILD_NUMBER:-latest}
 
-                        echo ${docker-creds} | docker login -u ${DOCKER_HUB} --password-stdin
+                        echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin
                         docker push ${DOCKER_HUB}/user-service:${TAG}
                         docker push ${DOCKER_HUB}/game-service:${TAG}
                         docker push ${DOCKER_HUB}/matchmaking-service:${TAG}
@@ -108,6 +108,7 @@
                     }
                 }
             }
+
 
             // ---------------- NEXUS UPLOAD ----------------
             stage('Upload to Nexus') {
