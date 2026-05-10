@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: game-service
-        image: pramay11/game-service:latest
+        image: pramay11/game-service:${TAG}
         ports:
         - containerPort: 3001
 ---
