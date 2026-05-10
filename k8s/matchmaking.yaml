@@ -23,7 +23,7 @@ kind: Service
 metadata:
   name: matchmaking-service
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: matchmaking-service
   ports:
